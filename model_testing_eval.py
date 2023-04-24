@@ -6,44 +6,69 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report
 from logistic_regression import LogisticRegression
 
-data = pd.read_csv('Training Data/Cleaned_Data.csv')
 
-# Encode the sentiment labels
-sentiment_map = {'positive': 1, 'negative': -1, 'neutral': 0}
-sentiment = data['sentiment'].map(sentiment_map)
+def main():
+    # Pre-process the data
+    X_train, X_test, y_train, y_test = preprocess()
 
-# Vectorize the sentences using bag-of-words model
-vectorizer = CountVectorizer()
-X = vectorizer.fit_transform(data['sentence'])
+    # Train and test Logistic Regression
+    logisticRegression(X_train, X_test, y_train, y_test)
 
-# Split the data
-X_train, X_test, y_train, y_test = train_test_split(X, sentiment, test_size=0.2, random_state=42)
+    # Train and test Multi-Layer Perceptron
+    multilayerPerceptron(X_train, X_test, y_train, y_test)
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train.toarray())
-X_test = scaler.transform(X_test.toarray())
 
-num_dim, num_features = X_train.shape
-_, num_test = X_test.shape
+def preprocess():
+    data = pd.read_csv('Training Data/Cleaned_Data.csv')
 
-classes = np.unique(y_train)
-num_classes = len(classes)
+    # Encode the sentiment labels
+    sentiment_map = {'positive': 1, 'negative': -1, 'neutral': 0}
+    sentiment = data['sentiment'].map(sentiment_map)
 
-model = {'weights': np.zeros((num_dim, num_classes))}
-learning_rate = 1
+    # Vectorize the sentences using bag-of-words model
+    vectorizer = CountVectorizer()
+    X = vectorizer.fit_transform(data['sentence'])
 
-# Instantiate the logistic regression model
-logreg = LogisticRegression()
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(X, sentiment, test_size=0.2, random_state=42)
 
-# Train the model
-logreg.fit(X_train, y_train)
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train.toarray())
+    X_test = scaler.transform(X_test.toarray())
 
-# Predict on the test set
-y_pred = logreg.predict(X_test)
+    return X_train, X_test, y_train, y_test
 
-# Evaluate the model
-accuracy = accuracy_score(y_test, y_pred)
-print('Accuracy:', accuracy)
-print('Classification Report:')
-print(classification_report(y_test, y_pred, zero_division=1))
 
+def logisticRegression(X_train, X_test, y_train, y_test):
+    # Instantiate the logistic regression model
+    logreg = LogisticRegression()
+
+    # Train the model
+    logreg.fit(X_train, y_train)
+
+    # Predict on the test set
+    y_pred = logreg.predict(X_test)
+
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    print('Accuracy:', accuracy)
+    print('Classification Report:')
+    print(classification_report(y_test, y_pred, zero_division=1))
+
+
+def multilayerPerceptron(X_train, X_test, y_train, y_test):
+    # Get sizes and classes
+    num_dim, num_features = X_train.shape
+    _, num_test = X_test.shape
+    classes = np.unique(y_train)
+    num_classes = len(classes)
+
+    # Set model and Learning Rate
+    model = {'weights': np.zeros((num_dim, num_classes))}
+    learning_rate = 1
+
+    # TODO: COMPLETE MLP
+
+
+if __name__ == "__main__":
+    main()
