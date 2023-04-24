@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 data = pd.read_csv('Training Data/Cleaned_Data.csv')
 
 # Encode the sentiment labels
-sentiment_map = {'positive': 1, 'negative': 0, 'neutral': 0}
+sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
 data['sentiment'] = data['sentiment'].map(sentiment_map)
 
 # Split the data
@@ -74,7 +74,7 @@ class RNNDataset(Dataset):
         row = self.df.iloc[idx]
         input_ids = torch.tensor(row["input_ids"])
         label = torch.tensor(row["label"])
-        return (input_ids, label)
+        return input_ids, label
 
 
 train_rnn_ds = RNNDataset(train_df)
@@ -95,7 +95,7 @@ class RNN(nn.Module):
             embedding_dim: int = 50,
             hidden_size: int = 128,
             n_layers: int = 2,
-            n_classes: int = 2
+            n_classes: int = 3
     ):
         super().__init__()
         self.n_layers = n_layers
