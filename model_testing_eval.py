@@ -15,10 +15,9 @@ from torchtext.data import get_tokenizer
 from MyDataset import MyDataset
 
 
-
 def main():
     # Pre-process the data
-    X_train, X_test, y_train, y_test, vocabulary = preprocess()
+    X_train, X_test, y_train, y_test = preprocess()
 
     # Train and test Logistic Regression
     logisticRegression(X_train, X_test, y_train, y_test)
@@ -27,7 +26,7 @@ def main():
     # multilayerPerceptron(X_train, X_test, y_train, y_test)
 
     # train and test RNN
-    rnn_eval(X_train, X_test, y_train, y_test, vocabulary)
+    rnn_eval(X_train, X_test, y_train, y_test)
 
 
 def preprocess():
@@ -53,7 +52,7 @@ def preprocess():
     X_train = scaler.fit_transform(X_train.toarray())
     X_test = scaler.transform(X_test.toarray())
 
-    return X_train, X_test, y_train, y_test, vocabulary
+    return X_train, X_test, y_train, y_test
 
 
 def logisticRegression(X_train, X_test, y_train, y_test):
@@ -111,7 +110,7 @@ def multilayerPerceptron(X_train, X_test, y_train, y_test):
     print("Accuracy: {:.2f}%".format(accuracy * 100))
 
 
-def rnn_eval(X_train, X_test, y_train, y_test, vocabulary):
+def rnn_eval(X_train, X_test, y_train, y_test):
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
