@@ -1,12 +1,13 @@
 import numpy as np
 
+
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
 
 # Define logistic regression model
 class LogisticRegression:
-    def __init__(self, learning_rate=0.01, n_iter=100):
+    def __init__(self, learning_rate=0.01, n_iter=400):  # 69.3384
         self.learning_rate = learning_rate
         self.n_iter = n_iter
 

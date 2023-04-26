@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -6,7 +5,7 @@ class RNN(nn.Module):
     def __init__(
             self,
             input_size: int,  # Input size for bag of words
-            hidden_size: int = 128,
+            hidden_size: int = 256,
             n_layers: int = 2,
             n_classes: int = 3
     ):
