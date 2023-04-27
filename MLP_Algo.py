@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class MLPNumpy:
+class MLPAlgo:
     def __init__(self, num_epochs):
         self.num_epochs = num_epochs
         self.num_classes = 3

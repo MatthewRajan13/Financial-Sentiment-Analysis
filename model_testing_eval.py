@@ -11,10 +11,10 @@ from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import DataLoader
 from MyDataset import MyDataset
 from tabulate import tabulate
-from MLP_PyTorch import MLP
+from MLP_Network import MLPNet
 from RNN import RNN
 from logistic_regression import LogisticRegression
-from MLP_Numpy import MLPNumpy
+from MLP_Algo import MLPAlgo
 
 
 def main():
@@ -25,8 +25,8 @@ def main():
     logreg_accuracy = logisticRegression(X_train, X_test, y_train, y_test)
 
     # Train and test Multi-Layer Perceptron
-    mlp_numpy_accuracy = multilayerPerceptron_numpy(X_train, X_test, y_train, y_test)
-    mlp_pytorch_accuracy = multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test)
+    mlp_numpy_accuracy = multilayerPerceptron_algo(X_train, X_test, y_train, y_test)
+    mlp_pytorch_accuracy = multilayerPerceptron_network(X_train, X_test, y_train, y_test)
 
     # Train and test RNN
     rnn_accuracy = rnn_eval(X_train, X_test, y_train, y_test)
@@ -35,7 +35,7 @@ def main():
 
 
 def display_accuracy(logreg: float = 0, mlpnp: float = 0, mlppy: float = 0, rnn: float = 0):
-    models = ["Logistic Regression", "Multi-Layer Perceptron Numpy", "Multi-Layer Perceptron PyTorch", "RNN"]
+    models = ["Logistic Regression", "Multi-Layer Perceptron Algorithm", "Multi-Layer Perceptron Network", "RNN"]
     accuracy_scores = [logreg, mlpnp, mlppy, rnn]
 
     data = [{"Model": model, "Accuracy (%)": score} for model, score in zip(models, accuracy_scores)]
@@ -128,8 +128,8 @@ def train(model, train_dl, n_epochs, optimizer, criterion, batch_size=64):
             optimizer.zero_grad()
 
 
-def multilayerPerceptron_numpy(X_train, X_test, y_train, y_test):
-    mlp = MLPNumpy(num_epochs=45)
+def multilayerPerceptron_algo(X_train, X_test, y_train, y_test):
+    mlp = MLPAlgo(num_epochs=45)
 
     mlp.train(X_train, y_train.values)
 
@@ -138,7 +138,7 @@ def multilayerPerceptron_numpy(X_train, X_test, y_train, y_test):
     accuracy = accuracy_score(y_test, predictions) * 100
 
     # Save the model
-    with open('mlp_numpy_model.pickle', 'wb') as f:
+    with open('mlp_algo_model.pickle', 'wb') as f:
         pickle.dump(mlp, f)
 
     # print(classification_report(y_test, predictions))
@@ -172,7 +172,7 @@ def test(model, test_dl, criterion, batch_size=64):
     return accuracy
 
 
-def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
+def multilayerPerceptron_network(X_train, X_test, y_train, y_test):
     # Switch to GPU
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -188,7 +188,7 @@ def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
         except StopIteration:
             break
 
-    mlp = MLP(X_train.shape[1])
+    mlp = MLPNet(X_train.shape[1])
     mlp = mlp.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -198,7 +198,7 @@ def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
     accuracy = test(mlp, test_dl, criterion)
 
     # Save the model
-    with open('mlp_pytorch_model.pickle', 'wb') as f:
+    with open('mlp_network_model.pickle', 'wb') as f:
         pickle.dump(mlp, f)
 
     return accuracy
