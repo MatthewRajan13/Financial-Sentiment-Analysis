@@ -6,6 +6,7 @@ import torch.nn as nn
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import DataLoader
 from MyDataset import MyDataset
@@ -27,7 +28,7 @@ def main():
     mlp_numpy_accuracy = multilayerPerceptron_numpy(X_train, X_test, y_train, y_test)
     mlp_pytorch_accuracy = multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test)
 
-    # train and test RNN
+    # Train and test RNN
     rnn_accuracy = rnn_eval(X_train, X_test, y_train, y_test)
 
     display_accuracy(logreg_accuracy, mlp_numpy_accuracy, mlp_pytorch_accuracy, rnn_accuracy)
@@ -37,10 +38,8 @@ def display_accuracy(logreg: float = 0, mlpnp: float = 0, mlppy: float = 0, rnn:
     models = ["Logistic Regression", "Multi-Layer Perceptron Numpy", "Multi-Layer Perceptron PyTorch", "RNN"]
     accuracy_scores = [logreg, mlpnp, mlppy, rnn]
 
-    # Create a list of dictionaries to store data
     data = [{"Model": model, "Accuracy (%)": score} for model, score in zip(models, accuracy_scores)]
 
-    # Print out accuracy scores using tabulate
     print(tabulate(data, headers="keys", tablefmt="grid"))
 
 
@@ -52,13 +51,14 @@ def data_to_split():
     vectorizer = CountVectorizer()
     X = vectorizer.fit_transform(data['sentence'])
 
-    # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, data['sentiment'], test_size=0.2, random_state=42)
 
+    # Normalize the data
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train.toarray())
     X_test = scaler.transform(X_test.toarray())
 
+    # Convert sentiments to numeric values
     sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
     y_train = y_train.map(sentiment_map)
     y_test = y_test.map(sentiment_map)
@@ -69,6 +69,7 @@ def data_to_split():
 def split_to_loader(X_train, X_test, y_train, y_test):
     batch_size = 64
 
+    # Combine the splits into train and test for DataLoader
     series = pd.Series(X_train.tolist()).apply(np.array)
     train_df = pd.concat([series, y_train.reset_index(drop=True)], axis=1)
     series = pd.Series(X_test.tolist()).apply(np.array)
@@ -87,22 +88,18 @@ def split_to_loader(X_train, X_test, y_train, y_test):
 
 
 def logisticRegression(X_train, X_test, y_train, y_test):
-    # Instantiate the logistic regression model
     logreg = LogisticRegression()
 
-    from sklearn.preprocessing import LabelBinarizer
     lb = LabelBinarizer()
     y_onehot = lb.fit_transform(y_train)
 
-    # Train the model
     logreg.fit(X_train, y_onehot)
 
-    # Predict on the test set
     y_pred = logreg.predict(X_test)
 
-    # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred) * 100
 
+    # Save the model
     with open('logreg_model.pickle', 'wb') as f:
         pickle.dump(logreg, f)
 
@@ -140,6 +137,7 @@ def multilayerPerceptron_numpy(X_train, X_test, y_train, y_test):
 
     accuracy = accuracy_score(y_test, predictions) * 100
 
+    # Save the model
     with open('mlp_numpy_model.pickle', 'wb') as f:
         pickle.dump(mlp, f)
 
@@ -149,6 +147,7 @@ def multilayerPerceptron_numpy(X_train, X_test, y_train, y_test):
 
 
 def test(model, test_dl, criterion, batch_size=64):
+    # Switch to GPU
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -174,6 +173,7 @@ def test(model, test_dl, criterion, batch_size=64):
 
 
 def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
+    # Switch to GPU
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -197,6 +197,7 @@ def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
 
     accuracy = test(mlp, test_dl, criterion)
 
+    # Save the model
     with open('mlp_pytorch_model.pickle', 'wb') as f:
         pickle.dump(mlp, f)
 
@@ -204,6 +205,7 @@ def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
 
 
 def rnn_eval(X_train, X_test, y_train, y_test):
+    # Switch to GPU
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -227,6 +229,7 @@ def rnn_eval(X_train, X_test, y_train, y_test):
 
     accuracy = test(rnn, test_dl, criterion)
 
+    # Save the model
     with open('rnn_model.pickle', 'wb') as f:
         pickle.dump(rnn, f)
 

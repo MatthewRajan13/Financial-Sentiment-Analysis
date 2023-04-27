@@ -1,5 +1,4 @@
 import torch
-from RNN import RNN
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import StandardScaler
@@ -26,6 +25,7 @@ def preprocess(data):
     vectorizer = CountVectorizer()
     data = vectorizer.fit_transform(data)
 
+    # Normalize the data
     scaler = StandardScaler()
     data = scaler.fit_transform(data.toarray())
 
@@ -50,7 +50,8 @@ def get_Predictions(data, orig_data, model='rnn'):
     else:
         device = torch.device("cpu")
 
-    padded_input = torch.zeros(100, 7127)  # Create a tensor of zeros with the expected input size
+    # Create a tensor of zeros with the expected input size
+    padded_input = torch.zeros(100, 7127)
     padded_input[:, :416] = data
 
     if model == 'logreg' or model == 'mlp_numpy':
@@ -111,12 +112,10 @@ def backtest(data):
     balance = 0
     portfolio_value = []
 
-    # Iterate over each row in the data
     for index, row in data.iterrows():
         sentiment = row["sentiment"]
         close_price = row["Adj Close"]
 
-        # Check the trading signal based on the current sentiment and previous portfolio state
         if sentiment == "Positive" and portfolio == 0:
             portfolio = 1
             balance -= close_price

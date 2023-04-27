@@ -31,4 +31,4 @@ class LogisticRegression:
 
     def softmax(self, z):
         exp_z = np.exp(z)
-        return exp_z / np.sum(exp_z, axis=1, keepdims=True)
+        return np.exp(z) / np.sum(np.exp(z), axis=1, keepdims=True)
