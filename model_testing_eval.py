@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pickle
 import torch
 import torch.nn as nn
 from sklearn.feature_extraction.text import CountVectorizer
@@ -97,18 +98,25 @@ def logisticRegression(X_train, X_test, y_train, y_test):
     logreg = LogisticRegression()
 
     # Encode the sentiment labels
-    sentiment_map = {'positive': 1, 'negative': -1, 'neutral': 0}
+    sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
     y_train = y_train.map(sentiment_map)
     y_test = y_test.map(sentiment_map)
 
+    from sklearn.preprocessing import LabelBinarizer
+    lb = LabelBinarizer()
+    y_onehot = lb.fit_transform(y_train)
+
     # Train the model
-    logreg.fit(X_train, y_train)
+    logreg.fit(X_train, y_onehot)
 
     # Predict on the test set
     y_pred = logreg.predict(X_test)
 
     # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred) * 100
+
+    with open('logreg_model.pickle', 'wb') as f:
+        pickle.dump(logreg, f)
 
     return accuracy
 
@@ -184,6 +192,9 @@ def multilayerPerceptron(X_train, X_test, y_train, y_test):
 
     accuracy = test(mlp, test_dl, criterion)
 
+    with open('mlp_model.pickle', 'wb') as f:
+        pickle.dump(mlp, f)
+
     return accuracy
 
 
@@ -210,6 +221,9 @@ def rnn_eval(X_train, X_test, y_train, y_test):
     train(rnn, train_dl, 10, optimizer, criterion)
 
     accuracy = test(rnn, test_dl, criterion)
+
+    with open('rnn_model.pickle', 'wb') as f:
+        pickle.dump(rnn, f)
 
     return accuracy
 
