@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 
 def main():
-    model = 'rnn'
+    model = 'mlp_pytorch'  # [logreg, mlp_numpy, mlp_pytorch, rnn]
     orig_data = pd.read_csv('Training Data/S&P_News.csv')
     data = preprocess(orig_data)
     predictions = get_Predictions(data, orig_data, model)
@@ -53,7 +53,7 @@ def get_Predictions(data, orig_data, model='rnn'):
     padded_input = torch.zeros(100, 7127)  # Create a tensor of zeros with the expected input size
     padded_input[:, :416] = data
 
-    if model == 'logreg':
+    if model == 'logreg' or model == 'mlp_numpy':
         predictions = loaded_model.predict(padded_input.numpy())
         predictions = pd.DataFrame(predictions, columns=['Prediction'])
         predictions['Prediction'] = predictions['Prediction'].map({0: 'Negative', 1: 'Neutral', 2: 'Positive'})

@@ -6,14 +6,14 @@ import torch.nn as nn
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import DataLoader
-from torchtext.data import get_tokenizer
 from MyDataset import MyDataset
 from tabulate import tabulate
-from MLP import MLP
+from MLP_PyTorch import MLP
 from RNN import RNN
 from logistic_regression import LogisticRegression
+from MLP_Numpy import MLPNumpy
 
 
 def main():
@@ -24,17 +24,18 @@ def main():
     logreg_accuracy = logisticRegression(X_train, X_test, y_train, y_test)
 
     # Train and test Multi-Layer Perceptron
-    mlp_accuracy = multilayerPerceptron(X_train, X_test, y_train, y_test)
+    mlp_numpy_accuracy = multilayerPerceptron_numpy(X_train, X_test, y_train, y_test)
+    mlp_pytorch_accuracy = multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test)
 
     # train and test RNN
     rnn_accuracy = rnn_eval(X_train, X_test, y_train, y_test)
 
-    display_accuracy(logreg_accuracy, mlp_accuracy, rnn_accuracy)
+    display_accuracy(logreg_accuracy, mlp_numpy_accuracy, mlp_pytorch_accuracy, rnn_accuracy)
 
 
-def display_accuracy(logreg: float = 0, mlp: float = 0, rnn: float = 0):
-    models = ["Logistic Regression", "Multi-Layer Perceptron", "RNN"]
-    accuracy_scores = [logreg, mlp, rnn]
+def display_accuracy(logreg: float = 0, mlpnp: float = 0, mlppy: float = 0, rnn: float = 0):
+    models = ["Logistic Regression", "Multi-Layer Perceptron Numpy", "Multi-Layer Perceptron PyTorch", "RNN"]
+    accuracy_scores = [logreg, mlpnp, mlppy, rnn]
 
     # Create a list of dictionaries to store data
     data = [{"Model": model, "Accuracy (%)": score} for model, score in zip(models, accuracy_scores)]
@@ -47,14 +48,6 @@ def data_to_split():
     data = pd.read_csv('Training Data/Appended75.csv')
     data = data.drop(data.columns[0], axis=1)
 
-    # Get Set of words
-    tokenizer = get_tokenizer("basic_english")
-    vocabulary = set()
-    for idx, sentence in data.sentence.items():
-        tokens = tokenizer(sentence)
-        for word in tokens:
-            vocabulary.add(word)
-
     # Vectorize the sentences using bag-of-words model
     vectorizer = CountVectorizer()
     X = vectorizer.fit_transform(data['sentence'])
@@ -65,6 +58,10 @@ def data_to_split():
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train.toarray())
     X_test = scaler.transform(X_test.toarray())
+
+    sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
+    y_train = y_train.map(sentiment_map)
+    y_test = y_test.map(sentiment_map)
 
     return X_train, X_test, y_train, y_test
 
@@ -80,10 +77,6 @@ def split_to_loader(X_train, X_test, y_train, y_test):
     train_df.columns = ['sentence', 'sentiment']
     test_df.columns = ['sentence', 'sentiment']
 
-    sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
-    train_df.sentiment = train_df.sentiment.map(sentiment_map)
-    test_df.sentiment = test_df.sentiment.map(sentiment_map)
-
     train_dataset = MyDataset(train_df)
     test_dataset = MyDataset(test_df)
 
@@ -96,11 +89,6 @@ def split_to_loader(X_train, X_test, y_train, y_test):
 def logisticRegression(X_train, X_test, y_train, y_test):
     # Instantiate the logistic regression model
     logreg = LogisticRegression()
-
-    # Encode the sentiment labels
-    sentiment_map = {'positive': 2, 'negative': 0, 'neutral': 1}
-    y_train = y_train.map(sentiment_map)
-    y_test = y_test.map(sentiment_map)
 
     from sklearn.preprocessing import LabelBinarizer
     lb = LabelBinarizer()
@@ -143,6 +131,23 @@ def train(model, train_dl, n_epochs, optimizer, criterion, batch_size=64):
             optimizer.zero_grad()
 
 
+def multilayerPerceptron_numpy(X_train, X_test, y_train, y_test):
+    mlp = MLPNumpy(num_epochs=45)
+
+    mlp.train(X_train, y_train.values)
+
+    predictions = mlp.predict(X_test)
+
+    accuracy = accuracy_score(y_test, predictions) * 100
+
+    with open('mlp_numpy_model.pickle', 'wb') as f:
+        pickle.dump(mlp, f)
+
+    # print(classification_report(y_test, predictions))
+
+    return accuracy
+
+
 def test(model, test_dl, criterion, batch_size=64):
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -168,7 +173,7 @@ def test(model, test_dl, criterion, batch_size=64):
     return accuracy
 
 
-def multilayerPerceptron(X_train, X_test, y_train, y_test):
+def multilayerPerceptron_pytorch(X_train, X_test, y_train, y_test):
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -192,7 +197,7 @@ def multilayerPerceptron(X_train, X_test, y_train, y_test):
 
     accuracy = test(mlp, test_dl, criterion)
 
-    with open('mlp_model.pickle', 'wb') as f:
+    with open('mlp_pytorch_model.pickle', 'wb') as f:
         pickle.dump(mlp, f)
 
     return accuracy
